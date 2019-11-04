@@ -10,6 +10,7 @@
           <e p="UniBridge" t="Include">
             <e p="BridgeRuntime.cs" t="Include" />
             <e p="FFI.cs" t="Include" />
+            <e p="HotReload.cs" t="Include" />
           </e>
         </e>
       </e>

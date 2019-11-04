@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 #[repr(C)]
 pub struct UniBridgeGlue {
     handle_panic: extern "C" fn (),
