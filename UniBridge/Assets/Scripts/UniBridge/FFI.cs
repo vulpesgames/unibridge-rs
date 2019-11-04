@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Runtime.InteropServices;
 using AOT;
 
@@ -59,7 +60,34 @@ namespace UniBridge {
         }
 
         public static unsafe implicit operator T*(Slice<T> self) => self.head;
+
+        public T[] ToArray() {
+            unsafe {
+                var arr = new T[(int) len];
+                var buf = new byte[(int) len * Marshal.SizeOf<T>()];
+
+                Marshal.Copy((IntPtr) this.head, buf, 0, (int) len);
+
+                fixed (T* p = arr) {
+                    Marshal.Copy(buf, 0, (IntPtr) p, (int) len);
+                }
+                
+                return arr;
+            }
+        }
         
+        public byte[] ToBytes() {
+            unsafe {
+                var buf = new byte[(int) len * Marshal.SizeOf<T>()];
+                Marshal.Copy((IntPtr) this.head, buf, 0, (int) len);
+                return buf;
+            }
+        }
+        
+        public override string ToString() {
+            return Encoding.UTF8.GetString(ToBytes());
+        }
+
         public IEnumerator<T> GetEnumerator() {
             for (var i = 0; i < Length; i++)
                 yield return this[i];

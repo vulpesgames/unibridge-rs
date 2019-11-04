@@ -1,0 +1,13 @@
+[package]
+name = "hello-world"
+version = "0.1.0"
+authors = ["3c1u (Hikaru Terazono) <298748+3c1u@users.noreply.github.com>"]
+edition = "2018"
+
+[lib]
+name = "HelloWorld"
+crate-type = ["dylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
