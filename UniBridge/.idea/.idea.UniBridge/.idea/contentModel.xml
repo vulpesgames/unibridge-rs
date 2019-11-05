@@ -9,10 +9,12 @@
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
         <e p="Scripts" t="Include">
+          <e p="RotFerris.cs" t="Include" />
           <e p="UniBridge" t="Include">
             <e p="BridgeRuntime.cs" t="Include" />
             <e p="FFI.cs" t="Include" />
             <e p="HotReload.cs" t="Include" />
+            <e p="InstancePool.cs" t="Include" />
           </e>
         </e>
       </e>

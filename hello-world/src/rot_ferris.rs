@@ -11,7 +11,7 @@ pub struct RotatingFerris {
 
 impl MonoBehaviour for RotatingFerris {
     fn start(&mut self, _ctx: Context) {
-
+        info!("Hello from Rust!");
     }
 
     fn update(&mut self, _ctx: Context) {
