@@ -6,7 +6,7 @@ using UnityEngine;
 using UniBridge;
 
 public class RotFerris : MonoBehaviour {
-    [SerializeField] GameObject ferris;
+    [SerializeField] GameObject ferris = null;
 
     private unsafe void* _rustInstance;
     

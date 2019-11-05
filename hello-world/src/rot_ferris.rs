@@ -4,7 +4,7 @@ use log::info;
 
 pub type GameObject = Context;
 
-pub struct RotatingFerris {
+pub struct RotFerris {
     rotation: f32,
     // #[unity(serialize_field)]
     _ferris: GameObject,
@@ -12,7 +12,7 @@ pub struct RotatingFerris {
 
 #[no_mangle]
 unsafe extern "C" fn new_ferris() -> *mut Box<dyn RustInstance> {
-    let ferris = Box::new(RotatingFerris {
+    let ferris = Box::new(RotFerris {
         rotation: 0.0,
         _ferris: Instance::null(),
     }) as Box<dyn RustInstance>;
@@ -25,7 +25,7 @@ unsafe extern "C" fn kill_ferris(ptr: *mut Box<dyn RustInstance>) {
     drop(Box::from_raw(ptr))
 }
 
-impl MonoBehaviour for RotatingFerris {
+impl MonoBehaviour for RotFerris {
     fn start(&mut self, _ctx: Context) {
         info!("仙狐さんもふりたいじゃん！！！！");
     }
@@ -38,7 +38,7 @@ impl MonoBehaviour for RotatingFerris {
     }
 }
 
-impl RustInstance for RotatingFerris {
+impl RustInstance for RotFerris {
     fn invoke(&mut self, ctx: Context, method_name: &str, _args: &[Instance]) -> Instance {
         match method_name {
             "Start" => {

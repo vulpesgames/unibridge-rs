@@ -1,4 +1,4 @@
-use crate::get_glue;
+use crate::glue::get_glue;
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
 struct UnityLogger;

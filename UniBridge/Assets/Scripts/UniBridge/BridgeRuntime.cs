@@ -18,14 +18,14 @@ namespace UniBridge {
         delegate void BridgeDropRuntime();
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        unsafe delegate UInt64 RustInvoke(void * rust, UInt64 context, Slice<char> name, Slice<UInt64> args);
-        
+        unsafe delegate UInt64 RustInvoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args);
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         unsafe delegate void* NewFerris();
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         unsafe delegate void KillFerris(void* ptr);
-        
+
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
         const string DYLIB_PATH = "/../../target/debug/libHelloWorld.dylib";
 #else
@@ -41,59 +41,95 @@ namespace UniBridge {
         public static HotReload InternalDll =>
             _internalDll ?? (_internalDll = new HotReload(Application.dataPath + DYLIB_PATH));
 
+#if UNITY_IOS || UNITY_ANDROID
+        const string LIB_PATH = "__Internal";
+#else
+        const string LIB_PATH = "HelloWorld";
+#endif
+
 #if UNITY_EDITOR
         public static void unibridge_init_runtime(UniBridgeGlue glue) {
             var f = Marshal.GetDelegateForFunctionPointer<BridgeInitRuntime>(
-                                                                             InternalDll
-                                                                                .FindSymbol("unibridge_init_runtime"));
+                InternalDll
+                   .FindSymbol("unibridge_init_runtime"));
 
             f(glue);
         }
 
         public static void unibridge_drop_runtime() {
             var f = Marshal.GetDelegateForFunctionPointer<BridgeDropRuntime>(
-                                                                             InternalDll
-                                                                                .FindSymbol("unibridge_drop_runtime"));
+                InternalDll
+                   .FindSymbol("unibridge_drop_runtime"));
 
             f();
         }
-        
+
         //
-        public static unsafe UInt64 unibridge_invoke(void * rust, UInt64 context, Slice<char> name, Slice<UInt64> args) {
+        public static unsafe UInt64 unibridge_invoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args) {
             var f = Marshal.GetDelegateForFunctionPointer<RustInvoke>(
-                                                                      InternalDll
-                                                                         .FindSymbol("unibridge_invoke"));
+                InternalDll
+                   .FindSymbol("unibridge_invoke"));
 
             return f(rust, context, name, args);
         }
-        
+
         public static unsafe void* new_ferris() {
             var f = Marshal.GetDelegateForFunctionPointer<NewFerris>(
-                                                                      InternalDll
-                                                                         .FindSymbol("new_ferris"));
+                InternalDll
+                   .FindSymbol("new_ferris"));
 
             return f();
         }
-        
-        public static unsafe void kill_ferris(void *ferris) {
+
+        public static unsafe void kill_ferris(void* ferris) {
             var f = Marshal.GetDelegateForFunctionPointer<KillFerris>(
-                                                                     InternalDll
-                                                                        .FindSymbol("kill_ferris"));
+                InternalDll
+                   .FindSymbol("kill_ferris"));
 
             f(ferris);
         }
 
 #else
-        [DllImport("HelloWorld", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
         public static extern void unibridge_init_runtime(UniBridgeGlue glue);
 
-        [DllImport("HelloWorld", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void unibridge_drop_runtime();``
+        [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void unibridge_drop_runtime();
+
+        [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
+        public static extern unsafe void unibridge_invoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args);
+
+        [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
+        public static extern unsafe void* new_ferris();
+
+        [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
+        public static extern unsafe void kill_ferris(void* ferris);
 #endif
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct UniBridgeGlue {
+        [StructLayout(LayoutKind.Sequential)]
+        private struct TypeCast<T> {
+            private bool success;
+            private T    value;
+
+            public TypeCast(bool success, T value) {
+                this.success = success;
+                this.value   = value;
+            }
+        }
+        
+        private struct TypeCastFloat {
+            private bool success;
+            private float value;
+
+            public TypeCastFloat(bool success, float value) {
+                this.success = success;
+                this.value   = value;
+            }
+        }
+        
         /* デリゲート型定義 */
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void UnityDebugLog(Slice<char> message);
@@ -108,7 +144,10 @@ namespace UniBridge {
         delegate UInt64 UniBridgeToF32(float x);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        delegate float UniBridgeTryF32(UInt64 x);
+        delegate TypeCast<T> UniBridgeTry<T>(UInt64 x);
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate UInt64 UniBridgeClone(UInt64 id);
 
         /* フィールド */
 
@@ -121,10 +160,12 @@ namespace UniBridge {
         private InstancePool.DisposeInstanceDelegate _disposeInstance;
         private InstancePool.InvokeMethodDelegate    _invokeMethod;
         private InstancePool.InvokeAsDelegate        _invokeAs;
+        private UniBridgeClone                       _clone;
 
-        private UniBridgeToString _toString;
-        private UniBridgeToF32    _toF32;
-        private UniBridgeTryF32   _tryF32;
+        private UniBridgeToString   _toString;
+        private UniBridgeToF32      _toF32;
+        private UniBridgeTry<float> _tryF32;
+        private UniBridgeTry<bool>  _tryBool;
 
         /* 既定の実装 */
 
@@ -154,6 +195,14 @@ namespace UniBridge {
             Debug.Log(message.ToString());
         }
 
+        private static TypeCast<T> TryCast<T>(UInt64 id) {
+            try {
+                return new TypeCast<T>(true, (T) InstancePool.GetInstance(id));
+            } catch (InvalidCastException _) {
+                return new TypeCast<T>(false, default(T));
+            }
+        }
+
         public static UniBridgeGlue CreateDefault() {
             return new UniBridgeGlue {
                 // エラーおよびログ機能
@@ -166,10 +215,13 @@ namespace UniBridge {
                 _disposeInstance = InstancePool.DisposeInstance,
                 _invokeMethod    = InstancePool.InvokeMethod,
                 _invokeAs        = InstancePool.InvokeAs,
+                // インスタンスの複製
+                _clone = x => InstancePool.AppendInstance(InstancePool.GetInstance(x)),
                 // プリミティブ型 <-> オブジェクト型変換
                 _toString = s => InstancePool.AppendInstance(s.ToString()),
                 _toF32    = x => InstancePool.AppendInstance(x),
-                _tryF32   = x => (float) InstancePool.GetInstance(x),
+                _tryF32   = TryCast<float>,
+                _tryBool  = TryCast<bool>,
             };
         }
     }
@@ -179,7 +231,7 @@ namespace UniBridge {
     /// </summary>
     public class BridgeRuntime : MonoBehaviour {
         private static bool _onceInitialized = false;
-        
+
         static BridgeRuntime _instance = null;
 
         public static BridgeRuntime Instance {
@@ -189,12 +241,13 @@ namespace UniBridge {
                     if (previous != null) {
                         _instance = previous;
                     } else {
-                        var obj = new GameObject ("UniBridge Runtime");
-                        _instance = obj.AddComponent<BridgeRuntime> ();
-                        DontDestroyOnLoad (obj);
+                        var obj = new GameObject("UniBridge Runtime");
+                        _instance = obj.AddComponent<BridgeRuntime>();
+                        DontDestroyOnLoad(obj);
                         obj.hideFlags = HideFlags.HideInHierarchy;
                     }
                 }
+
                 return _instance;
             }
         }
@@ -215,7 +268,7 @@ namespace UniBridge {
             // ランタイムの初期化を行う
             if (_onceInitialized)
                 return;
-            
+
             // TODO:
         }
 
