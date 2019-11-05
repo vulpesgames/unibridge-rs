@@ -15,6 +15,7 @@
             <e p="FFI.cs" t="Include" />
             <e p="HotReload.cs" t="Include" />
             <e p="InstancePool.cs" t="Include" />
+            <e p="RustInstance.cs" t="Include" />
           </e>
         </e>
       </e>

@@ -32,6 +32,11 @@ namespace UniBridge {
         private readonly unsafe T*      head;
         private readonly UIntPtr len;
 
+        public unsafe Slice(T* head, UIntPtr len) {
+            this.head = head;
+            this.len = len;
+        }
+
         public int Length => (int) len;
         
         private unsafe T* GetPointer(int index) {

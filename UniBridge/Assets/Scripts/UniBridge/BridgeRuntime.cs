@@ -10,13 +10,22 @@ using UnityEditor;
 #endif
 
 namespace UniBridge {
-    static class Internal {
+    public static class Internal {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void BridgeInitRuntime(UniBridgeGlue glue);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void BridgeDropRuntime();
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        unsafe delegate UInt64 RustInvoke(void * rust, UInt64 context, Slice<char> name, Slice<UInt64> args);
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        unsafe delegate void* NewFerris();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        unsafe delegate void KillFerris(void* ptr);
+        
         const string DYLIB_PATH = "/../../hello-world/target/debug/libHelloWorld.dylib";
 
         private static HotReload _internalDll = null;
@@ -45,6 +54,32 @@ namespace UniBridge {
 
             f();
         }
+        
+        //
+        public static unsafe UInt64 unibridge_invoke(void * rust, UInt64 context, Slice<char> name, Slice<UInt64> args) {
+            var f = Marshal.GetDelegateForFunctionPointer<RustInvoke>(
+                                                                      InternalDll
+                                                                         .FindSymbol("unibridge_invoke"));
+
+            return f(rust, context, name, args);
+        }
+        
+        public static unsafe void* new_ferris() {
+            var f = Marshal.GetDelegateForFunctionPointer<NewFerris>(
+                                                                      InternalDll
+                                                                         .FindSymbol("new_ferris"));
+
+            return f();
+        }
+        
+        public static unsafe void kill_ferris(void *ferris) {
+            var f = Marshal.GetDelegateForFunctionPointer<KillFerris>(
+                                                                     InternalDll
+                                                                        .FindSymbol("kill_ferris"));
+
+            f(ferris);
+        }
+
 #else
         [DllImport("HelloWorld", CallingConvention = CallingConvention.Cdecl)]
         public static extern void unibridge_init_runtime(UniBridgeGlue glue);
@@ -55,7 +90,7 @@ namespace UniBridge {
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct UniBridgeGlue {
+    public struct UniBridgeGlue {
         /* デリゲート型定義 */
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void UnityDebugLog(Slice<char> message);
@@ -141,16 +176,50 @@ namespace UniBridge {
     /// </summary>
     public class BridgeRuntime : MonoBehaviour {
         private static bool _onceInitialized = false;
+        
+        static BridgeRuntime _instance = null;
+
+        public static BridgeRuntime Instance {
+            get {
+                if (_instance == null) {
+                    var previous = FindObjectOfType<BridgeRuntime>();
+                    if (previous != null) {
+                        _instance = previous;
+                    } else {
+                        var obj = new GameObject ("UniBridge Runtime");
+                        _instance = obj.AddComponent<BridgeRuntime> ();
+                        DontDestroyOnLoad (obj);
+                        obj.hideFlags = HideFlags.HideInHierarchy;
+                    }
+                }
+                return _instance;
+            }
+        }
+
+        public static void InitializeRuntime() {
+            if (_onceInitialized)
+                return;
+
+            _onceInitialized = true;
+            Instance.RuntimeEntry();
+        }
+
+        public static RustInstance GetRustInstance(string name) {
+            return null;
+        }
 
         private void Awake() {
             // ランタイムの初期化を行う
             if (_onceInitialized)
                 return;
+            
+            // TODO:
+        }
 
+        private void RuntimeEntry() {
             var glue = UniBridgeGlue.CreateDefault();
 
             Internal.unibridge_init_runtime(glue);
-            _onceInitialized = true;
         }
 
         private void OnDestroy() {

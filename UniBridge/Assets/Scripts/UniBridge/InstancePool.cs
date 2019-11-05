@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AOT;
+using UnityEngine;
 
 namespace UniBridge {
     public static class InstancePool {
@@ -91,6 +92,11 @@ namespace UniBridge {
         public static UInt64 InvokeAs(UInt64 id, Slice<char> className, Slice<char> methodName, Slice<UInt64> args) {
             // id == 0 （ヌル）の時は、静的メソッド呼び出しを行う
             var ty = Type.GetType(className.ToString());
+
+            if (ty == null) {
+                Debug.LogWarning("type is null");
+            }
+            
             var args1 = args.ToArray()
                             .Select(GetInstance)
                             .ToArray();
@@ -104,6 +110,10 @@ namespace UniBridge {
             var instance = GetInstance(id);
             var method = ty?.GetMethod(methodName.ToString(),
                                        args1.Length == 0 ? Type.EmptyTypes : args1.Select(o => o.GetType()).ToArray());
+
+            if (method == null) {
+                Debug.LogWarning("method is null");
+            }
 
             return AppendInstance(method?.Invoke(instance, args1));
         }
