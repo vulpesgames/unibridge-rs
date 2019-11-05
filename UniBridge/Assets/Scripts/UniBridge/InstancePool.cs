@@ -69,6 +69,9 @@ namespace UniBridge {
 
         [MonoPInvokeCallback(typeof(DisposeInstanceDelegate))]
         public static void DisposeInstance(UInt64 id) {
+            if (id == 0)
+                return;
+            
             _unusedInstance.Push(id);
             object o = _instances.Remove(id);
         }

@@ -26,7 +26,7 @@ namespace UniBridge {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         unsafe delegate void KillFerris(void* ptr);
         
-        const string DYLIB_PATH = "/../../hello-world/target/debug/libHelloWorld.dylib";
+        const string DYLIB_PATH = "/../../target/debug/libHelloWorld.dylib";
 
         private static HotReload _internalDll = null;
 

@@ -26,19 +26,20 @@ public class RotFerris : MonoBehaviour {
         }
     }
 
-    private object _InvokeRust(string name, params object[] args) {
+    private object _InvokeRustFunction(string methodName, params object[] args) {
         // Rust側のインスタンスの関数を呼び出す
-        var methodName = System.Text.Encoding.UTF8.GetBytes(name);
+        var methodName1 = System.Text.Encoding.UTF8.GetBytes(methodName);
         var args1 = args.Select(InstancePool.AppendInstance)
                        .ToArray();
         
         unsafe {
             fixed (UInt64* a = args1)
-            fixed (byte* b = methodName) {
+            fixed (byte* b = methodName1) {
                 var res = Internal.unibridge_invoke(_rustInstance,
                                                      InstancePool.AppendInstance(this), 
-                                                     new Slice<char>((char*) b, (UIntPtr) methodName.Length),
-                                                     new Slice<UInt64>(a, (UIntPtr) args.Length));
+                                                     new Slice<char>((char*) b, (UIntPtr) methodName1.Length),
+                                                     new Slice<UInt64>(a, (UIntPtr) args1.Length));
+                
                 var res1 = InstancePool.GetInstance(res);
                 InstancePool.DisposeInstance(res);
 
@@ -48,11 +49,11 @@ public class RotFerris : MonoBehaviour {
     }
 
     private void Start() {
-        _InvokeRust("Start", new object[] { });
+        _InvokeRustFunction("Start");
     }
 
     private void Update() {
-        _InvokeRust("Update", new object[] { });
+        _InvokeRustFunction("Update");
     }
 
     public void SetFerrisRotation(float rot) {
