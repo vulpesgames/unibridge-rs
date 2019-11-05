@@ -9,16 +9,17 @@ namespace UniBridge {
         /* デリゲート型定義 */
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate UInt64 NewInstanceDelegate(Slice<char> className, Slice<UInt64> args);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void DisposeInstanceDelegate(UInt64 id);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate UInt64 InvokeMethodDelegate(UInt64 id, Slice<char> methodName, Slice<UInt64> args);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate UInt64 InvokeAsDelegate(UInt64 id, Slice<char> className, Slice<char> methodName, Slice<UInt64> args);
-        
+        public delegate UInt64 InvokeAsDelegate(UInt64        id, Slice<char> className, Slice<char> methodName,
+                                                Slice<UInt64> args);
+
         private static          Dictionary<UInt64, object> _instances       = new Dictionary<UInt64, object>();
         private static          UInt64                     _instanceCounter = 1;
         private static readonly Stack<UInt64>              _unusedInstance  = new Stack<UInt64>();
@@ -49,7 +50,7 @@ namespace UniBridge {
             _unusedInstance.Clear();
             _instances.Clear();
         }
-        
+
         // Rust側から呼び出すメソッド
         [MonoPInvokeCallback(typeof(NewInstanceDelegate))]
         public static UInt64 NewInstance(Slice<char> className, Slice<UInt64> args) {
@@ -88,13 +89,19 @@ namespace UniBridge {
 
         [MonoPInvokeCallback(typeof(InvokeAsDelegate))]
         public static UInt64 InvokeAs(UInt64 id, Slice<char> className, Slice<char> methodName, Slice<UInt64> args) {
-            var instance = GetInstance(id);
-            var ty       = Type.GetType(className.ToString());
+            // id == 0 （ヌル）の時は、静的メソッド呼び出しを行う
+            var ty = Type.GetType(className.ToString());
             var args1 = args.ToArray()
                             .Select(GetInstance)
                             .ToArray();
 
+            if (id == 0) {
+                var res = ty?.InvokeMember(methodName.ToString(), System.Reflection.BindingFlags.InvokeMethod,
+                                           null, null, args1);
+                return AppendInstance(res);
+            }
 
+            var instance = GetInstance(id);
             var method = ty?.GetMethod(methodName.ToString(),
                                        args1.Length == 0 ? Type.EmptyTypes : args1.Select(o => o.GetType()).ToArray());
 

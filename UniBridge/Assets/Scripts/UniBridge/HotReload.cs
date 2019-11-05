@@ -43,19 +43,20 @@ namespace UniBridge {
 
         public HotReload(string path) {
             var randNum = Random.Range(100000, 999999);
-            
+
             _tempFile = path + ".tmp." + randNum + ".dylib";
             File.Copy(path, _tempFile);
 
             var installNameTool = new ProcessStartInfo {
-                FileName  = "/usr/bin/install_name_tool",
-                Arguments = $"-id /tmp/UniBridge.{randNum}.dylib \"{_tempFile}\"",
-                RedirectStandardError = true,
+                FileName               = "/usr/bin/install_name_tool",
+                Arguments              = $"-id /tmp/UniBridge.{randNum}.dylib \"{_tempFile}\"",
+                RedirectStandardError  = true,
                 RedirectStandardOutput = true,
-                UseShellExecute = false,
+                UseShellExecute        = false,
             };
             using (var p = Process.Start(installNameTool)) {
                 p.WaitForExit();
+
                 if (p.ExitCode != 0) {
                     throw new Exception("failed to reload dylib");
                 }
@@ -81,7 +82,7 @@ namespace UniBridge {
 
             if (sym == IntPtr.Zero) {
                 throw new KeyNotFoundException(
-                    $"failed to load symbol \"{symbol}\": {Marshal.PtrToStringAnsi(dlerror())}");
+                                               $"failed to load symbol \"{symbol}\": {Marshal.PtrToStringAnsi(dlerror())}");
             }
 
             return sym;
@@ -96,7 +97,7 @@ namespace UniBridge {
 #if UNITY_EDITOR_OSX
             // 読み込んだDLLを破棄する
             File.Delete(_tempFile);
-            
+
             if (dlclose(_dlHandler) != 0) {
                 throw new Exception($"failed to unload DLL: {Marshal.PtrToStringAnsi(dlerror())}");
             }

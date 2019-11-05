@@ -63,6 +63,15 @@ namespace UniBridge {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void UniBridgePanicHandler();
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate UInt64 UniBridgeToString(Slice<char> str);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate UInt64 UniBridgeToF32(float x);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate float UniBridgeTryF32(UInt64 x);
+
         /* フィールド */
 
         private UniBridgePanicHandler _handlePanic;
@@ -74,6 +83,10 @@ namespace UniBridge {
         private InstancePool.DisposeInstanceDelegate _disposeInstance;
         private InstancePool.InvokeMethodDelegate    _invokeMethod;
         private InstancePool.InvokeAsDelegate        _invokeAs;
+
+        private UniBridgeToString _toString;
+        private UniBridgeToF32    _toF32;
+        private UniBridgeTryF32   _tryF32;
 
         /* 既定の実装 */
 
@@ -105,14 +118,20 @@ namespace UniBridge {
 
         public static UniBridgeGlue CreateDefault() {
             return new UniBridgeGlue {
-                _handlePanic     = HandlePanic,
-                _errorLog        = ErrorLog,
-                _warnLog         = WarnLog,
-                _infoLog         = InfoLog,
+                // エラーおよびログ機能
+                _handlePanic = HandlePanic,
+                _errorLog    = ErrorLog,
+                _warnLog     = WarnLog,
+                _infoLog     = InfoLog,
+                // メソッド呼び出しおよびインスタンス生成・破棄
                 _newInstance     = InstancePool.NewInstance,
                 _disposeInstance = InstancePool.DisposeInstance,
                 _invokeMethod    = InstancePool.InvokeMethod,
                 _invokeAs        = InstancePool.InvokeAs,
+                // プリミティブ型 <-> オブジェクト型変換
+                _toString = s => InstancePool.AppendInstance(s.ToString()),
+                _toF32    = x => InstancePool.AppendInstance(x),
+                _tryF32   = x => (float) InstancePool.GetInstance(x),
             };
         }
     }
