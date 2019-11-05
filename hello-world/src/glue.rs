@@ -1,7 +1,5 @@
 use crate::Instance;
-
-#[repr(C)]
-pub(crate) struct TypeCast<T>(pub(crate) bool, pub(crate) T);
+use crate::instance::TypeCast;
 
 #[repr(C)]
 pub struct UniBridgeGlue {

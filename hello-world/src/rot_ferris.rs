@@ -29,10 +29,10 @@ impl MonoBehaviour for RotFerris {
     fn start(&mut self, _ctx: Context) {
         info!("仙狐さんもふりたいじゃん！！！！");
 
-        let pi_instance = (crate::glue::get_glue().to_f32)(std::f32::consts::PI);
-        let crate::glue::TypeCast(succ, val) = (crate::glue::get_glue().try_f32)(pi_instance);
+        use std::convert::TryFrom;
+        let pi_instance = f32::try_from(Instance::from(std::f32::consts::PI));
 
-        if succ && val == std::f32::consts::PI {
+        if Ok(std::f32::consts::PI) == pi_instance {
             info!("Cast successful!");
         } else {
             info!("Cast failed");

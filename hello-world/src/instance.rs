@@ -3,6 +3,9 @@ use crate::glue::get_glue;
 #[repr(C)]
 pub struct Instance(u64);
 
+#[repr(C)]
+pub struct TypeCast<T>(pub(crate) bool, pub(crate) T);
+
 impl Instance {
     pub fn null() -> Instance {
         Instance(0)
@@ -60,9 +63,9 @@ impl From<f32> for Instance {
     }
 }
 
-use crate::glue::TypeCast;
 use std::convert::TryFrom;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct CastError;
 
 impl TryFrom<Instance> for f32 {
