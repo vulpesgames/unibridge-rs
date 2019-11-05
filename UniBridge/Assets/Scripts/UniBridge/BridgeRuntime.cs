@@ -110,16 +110,17 @@ namespace UniBridge {
     [StructLayout(LayoutKind.Sequential)]
     public struct UniBridgeGlue {
         [StructLayout(LayoutKind.Sequential)]
-        private struct TypeCast<T> {
+        private struct TypeCastBool {
             private bool success;
-            private T    value;
+            private bool value;
 
-            public TypeCast(bool success, T value) {
+            public TypeCastBool(bool success, bool value) {
                 this.success = success;
                 this.value   = value;
             }
         }
         
+        [StructLayout(LayoutKind.Sequential)]
         private struct TypeCastFloat {
             private bool success;
             private float value;
@@ -142,9 +143,12 @@ namespace UniBridge {
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeToF32(float x);
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate TypeCastBool UniBridgeTryBool(UInt64 x);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        delegate TypeCast<T> UniBridgeTry<T>(UInt64 x);
+        delegate TypeCastFloat UniBridgeTryFloat(UInt64 x);
         
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeClone(UInt64 id);
@@ -164,8 +168,8 @@ namespace UniBridge {
 
         private UniBridgeToString   _toString;
         private UniBridgeToF32      _toF32;
-        private UniBridgeTry<float> _tryF32;
-        private UniBridgeTry<bool>  _tryBool;
+        private UniBridgeTryFloat _tryF32;
+        private UniBridgeTryBool  _tryBool;
 
         /* 既定の実装 */
 
@@ -195,11 +199,19 @@ namespace UniBridge {
             Debug.Log(message.ToString());
         }
 
-        private static TypeCast<T> TryCast<T>(UInt64 id) {
+        private static TypeCastFloat TryCastFloat(UInt64 id) {
             try {
-                return new TypeCast<T>(true, (T) InstancePool.GetInstance(id));
+                return new TypeCastFloat(true, (float) InstancePool.GetInstance(id));
             } catch (InvalidCastException _) {
-                return new TypeCast<T>(false, default(T));
+                return new TypeCastFloat(false, default(float));
+            }
+        }
+
+        private static TypeCastBool TryCastBool(UInt64 id) {
+            try {
+                return new TypeCastBool(true, (bool) InstancePool.GetInstance(id));
+            } catch (InvalidCastException _) {
+                return new TypeCastBool(false, default(bool));
             }
         }
 
@@ -220,8 +232,8 @@ namespace UniBridge {
                 // プリミティブ型 <-> オブジェクト型変換
                 _toString = s => InstancePool.AppendInstance(s.ToString()),
                 _toF32    = x => InstancePool.AppendInstance(x),
-                _tryF32   = TryCast<float>,
-                _tryBool  = TryCast<bool>,
+                _tryF32   = TryCastFloat,
+                _tryBool  = TryCastBool,
             };
         }
     }

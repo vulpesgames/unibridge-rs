@@ -64,7 +64,7 @@ use crate::glue::TypeCast;
 use std::convert::TryFrom;
 
 pub struct CastError;
-/*
+
 impl TryFrom<Instance> for f32 {
     type Error = CastError;
 
@@ -96,7 +96,6 @@ impl TryFrom<Instance> for bool {
         }
     }
 }
-*/
 
 impl std::ops::Deref for Instance {
     type Target = u64;
