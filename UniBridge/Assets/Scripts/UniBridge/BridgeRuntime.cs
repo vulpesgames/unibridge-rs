@@ -26,8 +26,11 @@ namespace UniBridge {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         unsafe delegate void KillFerris(void* ptr);
         
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
         const string DYLIB_PATH = "/../../target/debug/libHelloWorld.dylib";
-
+#else
+		const string DYLIB_PATH = "/../../target/debug/HelloWorld.dll";
+#endif
         private static HotReload _internalDll = null;
 
         public static void ResetHotReload() {
