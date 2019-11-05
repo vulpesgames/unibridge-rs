@@ -37,7 +37,9 @@ extern "C" fn unibridge_init_runtime(glue: UniBridgeGlue) {
     // UniBridgeのランタイムを初期化する
     // ロガーの初期化
     init_panic_handler();
-    logger::init().unwrap();
+    if logger::init().is_err() {
+        // error!("failed to set logger");
+    }
     
     info!("Hello, world!");
     error!("this is error");
