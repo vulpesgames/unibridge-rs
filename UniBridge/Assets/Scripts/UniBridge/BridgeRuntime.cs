@@ -29,7 +29,7 @@ namespace UniBridge {
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
         const string DYLIB_PATH = "/../../target/debug/libHelloWorld.dylib";
 #else
-		const string DYLIB_PATH = "/../../target/debug/HelloWorld.dll";
+        const string DYLIB_PATH = "/../../target/debug/HelloWorld.dll";
 #endif
         private static HotReload _internalDll = null;
 
@@ -119,10 +119,10 @@ namespace UniBridge {
                 this.value   = value;
             }
         }
-        
+
         [StructLayout(LayoutKind.Sequential)]
         private struct TypeCastFloat {
-            private bool success;
+            private bool  success;
             private float value;
 
             public TypeCastFloat(bool success, float value) {
@@ -130,7 +130,7 @@ namespace UniBridge {
                 this.value   = value;
             }
         }
-        
+
         /* デリゲート型定義 */
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void UnityDebugLog(Slice<char> message);
@@ -143,13 +143,13 @@ namespace UniBridge {
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeToF32(float x);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate TypeCastBool UniBridgeTryBool(UInt64 x);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate TypeCastFloat UniBridgeTryFloat(UInt64 x);
-        
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeClone(UInt64 id);
 
@@ -166,8 +166,8 @@ namespace UniBridge {
         private InstancePool.InvokeAsDelegate        _invokeAs;
         private UniBridgeClone                       _clone;
 
-        private UniBridgeToString   _toString;
-        private UniBridgeToF32      _toF32;
+        private UniBridgeToString _toString;
+        private UniBridgeToF32    _toF32;
         private UniBridgeTryFloat _tryF32;
         private UniBridgeTryBool  _tryBool;
 

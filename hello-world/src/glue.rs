@@ -1,5 +1,5 @@
-use crate::Instance;
 use crate::instance::TypeCast;
+use crate::Instance;
 
 #[repr(C)]
 pub struct UniBridgeGlue {

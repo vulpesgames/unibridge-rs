@@ -86,62 +86,63 @@ namespace UniBridge {
 
             if (sym == IntPtr.Zero) {
                 throw new KeyNotFoundException(
-                                               $"failed to load symbol \"{symbol}\": {Marshal.PtrToStringAnsi(dlerror())}");
+                    $"failed to load symbol \"{symbol}\": {Marshal.PtrToStringAnsi(dlerror())}");
             }
 
             return sym;
         }
+
 #elif UNITY_EDITOR_WIN
-		// WindowsのUnityEditor向けの実装
-		[DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
-		private static extern LibraryHandle LoadLibrary(string lpLibFileName);
+        // WindowsのUnityEditor向けの実装
+        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern LibraryHandle LoadLibrary(string lpLibFileName);
 
-		[DllImport("kernel32", SetLastError = true)]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		private static extern bool FreeLibrary(IntPtr hLibModule);
+        [DllImport("kernel32", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool FreeLibrary(IntPtr hLibModule);
 
-		[DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
-		private static extern IntPtr GetProcAddress(LibraryHandle hModule, string lpProcName);
+        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
+        private static extern IntPtr GetProcAddress(LibraryHandle hModule, string lpProcName);
 
-		[DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		private static extern bool SetDllDirectory(string lpPathName);
+        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetDllDirectory(string lpPathName);
 
-		sealed class LibraryHandle : SafeHandleZeroOrMinusOneIsInvalid {
-			public LibraryHandle() : base(true) {}
+        sealed class LibraryHandle : SafeHandleZeroOrMinusOneIsInvalid {
+            public LibraryHandle() : base(true) { }
 
-			protected override bool ReleaseHandle() {
-				return FreeLibrary(this.handle);
-			}
-		}
+            protected override bool ReleaseHandle() {
+                return FreeLibrary(this.handle);
+            }
+        }
 
-		private string _tempFile = null;
-		private LibraryHandle _handle = null;
+        private string        _tempFile = null;
+        private LibraryHandle _handle = null;
 
-		public HotReload(string path) {
-			var randNum = Random.Range(100000, 999999);
+        public HotReload(string path) {
+            var randNum = Random.Range(100000, 999999);
 
-			_tempFile = path + ".tmp." + randNum + ".dll";
-			File.Copy(path, _tempFile);
+            _tempFile = path + ".tmp." + randNum + ".dll";
+            File.Copy(path, _tempFile);
 
-			var h = LoadLibrary(_tempFile);
-			if (h.IsInvalid) {
-				throw new Exception($"failed to load DLL");
-			}
+            var h = LoadLibrary(_tempFile);
+            if (h.IsInvalid) {
+                throw new Exception($"failed to load DLL");
+            }
 
-			_handle = h;
-		}
+            _handle = h;
+        }
 
-		public IntPtr FindSymbol(string symbol) {
-			return GetProcAddress(_handle, symbol);
-		}
+        public IntPtr FindSymbol(string symbol) {
+            return GetProcAddress(_handle, symbol);
+        }
 #endif
 
         public void Dispose() {
 #if UNITY_EDITOR_OSX
-			if (_dlHandler == IntPtr.Zero) {
-			return;
-			}
+            if (_dlHandler == IntPtr.Zero) {
+                return;
+            }
 
             // 読み込んだDLLを破棄する
             File.Delete(_tempFile);
@@ -152,10 +153,10 @@ namespace UniBridge {
 
             _dlHandler = IntPtr.Zero;
 #elif UNITY_EDITOR_WIN
-			_handle?.Dispose();
+            _handle?.Dispose();
 
-			// 読み込んだDLLを破棄する
-			File.Delete(_tempFile);
+            // 読み込んだDLLを破棄する
+            File.Delete(_tempFile);
 #endif
         }
     }

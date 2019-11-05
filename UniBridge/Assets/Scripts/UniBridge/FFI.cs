@@ -9,15 +9,16 @@ namespace UniBridge {
     class GlobalAllocator {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate IntPtr AllocMemoryDelegate(UIntPtr size);
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void DeallocMemoryDelegate(IntPtr pointer);
-        
+
         // メモリ確保と解放
         [MonoPInvokeCallback(typeof(AllocMemoryDelegate))]
         static IntPtr AllocMemory(UIntPtr size) {
             return Marshal.AllocHGlobal((int) size);
         }
-        
+
         [MonoPInvokeCallback(typeof(DeallocMemoryDelegate))]
         static void DeallocMemory(IntPtr pointer) {
             Marshal.FreeHGlobal(pointer);
@@ -28,15 +29,15 @@ namespace UniBridge {
     [StructLayout(LayoutKind.Sequential)]
     public struct Slice<T> where T : unmanaged {
         private readonly unsafe T*      head;
-        private readonly UIntPtr len;
+        private readonly        UIntPtr len;
 
         public unsafe Slice(T* head, UIntPtr len) {
             this.head = head;
-            this.len = len;
+            this.len  = len;
         }
 
         public int Length => (int) len;
-        
+
         private unsafe T* GetPointer(int index) {
             // 領域の検査
             if (index < 0 || Length <= index) {
@@ -76,11 +77,11 @@ namespace UniBridge {
                 fixed (T* p = arr) {
                     Marshal.Copy(buf, 0, (IntPtr) p, (int) len);
                 }
-                
+
                 return arr;
             }
         }
-        
+
         public byte[] ToBytes() {
             unsafe {
                 var buf = new byte[(int) len * Marshal.SizeOf<T>()];
@@ -88,7 +89,7 @@ namespace UniBridge {
                 return buf;
             }
         }
-        
+
         public override string ToString() {
             return Encoding.UTF8.GetString(ToBytes());
         }
