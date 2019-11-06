@@ -12,3 +12,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 log = "0.4.8"
+cgmath = "0.17.0"

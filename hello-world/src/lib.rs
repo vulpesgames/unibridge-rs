@@ -5,11 +5,14 @@ pub mod logger;
 pub mod rot_ferris;
 pub mod unity;
 
+pub mod math;
+
 mod glue;
 mod instance;
 
 pub use glue::UniBridgeGlue;
 pub use instance::Instance;
+pub use math::*;
 
 #[no_mangle]
 /// UniBridgeのランタイムを初期化します。

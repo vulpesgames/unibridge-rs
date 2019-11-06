@@ -58,4 +58,8 @@ public class RotFerris : MonoBehaviour {
     public void SetFerrisRotation(float rot) {
         ferris.transform.rotation = Quaternion.Euler(0, 0, rot);
     }
+    
+    public void TestVector(Vector3 v) {
+        Debug.Log(v);
+    }
 }
