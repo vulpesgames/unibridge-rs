@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![warn(clippy::all)]
 
 pub mod logger;
 pub mod rot_ferris;
@@ -35,7 +36,18 @@ unsafe extern "C" fn unibridge_invoke(
     method_name: &str,
     args: &[Instance],
 ) -> Instance {
-    (*i).invoke(ctx, method_name, args)
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    match catch_unwind(AssertUnwindSafe (|| {
+        (*i).invoke(ctx, method_name, args)
+    })) {
+        Ok(r) => r,
+        Err(_) => {
+            // Unity側のパニックハンドラを呼び出す
+            (glue::get_glue().handle_panic)();
+            Instance::null()
+        }
+    }
 }
 
 fn init_panic_handler() {
@@ -53,14 +65,10 @@ fn init_panic_handler() {
         };
 
         let UniBridgeGlue {
-            ref handle_panic,
             ref error_log,
             ..
         } = glue::get_glue();
 
         error_log(&format!("plugin panicked at '{}', {}", msg, location));
-
-        // Unity側のパニックハンドラを呼び出す
-        handle_panic();
     }));
 }
