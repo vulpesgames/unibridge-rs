@@ -3,10 +3,12 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using UniBridge;
 
 public class RotFerris : MonoBehaviour {
-    [SerializeField] GameObject ferris = null;
+    public GameObject ferris = null;
+    public Text fpsField = null;
 
     private unsafe void* _rustInstance;
 

@@ -19,7 +19,13 @@ pub struct UniBridgeGlue {
 
     pub(crate) get_property:
         extern "C" fn(id: u64, class_name: &str, property_name: &str) -> Instance,
+    pub(crate) get_field:
+        extern "C" fn(id: u64, class_name: &str, field_name: &str) -> Instance,
 
+    pub(crate) set_property:
+        extern "C" fn(id: u64, class_name: &str, property_name: &str, value: u64) -> bool,
+    pub(crate) set_field:
+        extern "C" fn(id: u64, class_name: &str, field_name: &str, value: u64) -> bool,
     // 特殊キャスト
     pub(crate) sized_bytes: extern "C" fn(ptr: &[u8]) -> Instance,
 

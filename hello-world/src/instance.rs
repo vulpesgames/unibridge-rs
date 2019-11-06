@@ -36,6 +36,22 @@ impl Instance {
         (get_glue().invoke_as)(self.0, class_name, method, args)
     }
 
+    pub fn get_property(&self, name: &str) -> Instance {
+        (get_glue().get_property)(self.0, "", name)
+    }
+    
+    pub fn get_field(&self, name: &str) -> Instance {
+        (get_glue().get_field)(self.0, "", name)
+    }
+
+    pub fn set_property(&self, name: &str, value: &Instance) {
+        (get_glue().set_property)(self.0, "", name, value.0);
+    }
+    
+    pub fn set_field(&self, name: &str, value: &Instance) {
+        (get_glue().set_field)(self.0, "", name, value.0);
+    }
+
     pub fn leak(instance: Self) -> u64 {
         let mut self_ = instance;
         std::mem::replace(&mut self_.0, 0)

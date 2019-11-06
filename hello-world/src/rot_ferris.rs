@@ -4,22 +4,22 @@ use crate::unity::*;
 use crate::Instance;
 use log::info;
 
-pub type GameObject = Context;
-
 pub struct RotFerris {
     // #[unity(self)]
     ctx: Context,
     rotation: f32,
     // #[unity(serialize_field)]
-    _ferris: GameObject,
+    ferris: Instance,
+    fps_field: Instance,
 }
 
 #[no_mangle]
 unsafe extern "C" fn new_ferris(ctx: Context) -> *mut Box<dyn RustInstance> {
     let ferris = Box::new(RotFerris {
-        ctx,
+        ferris: ctx.get_field("ferris"),
+        fps_field: ctx.get_field("fpsField"),
         rotation: 0.0,
-        _ferris: Instance::null(),
+        ctx,
     }) as Box<dyn RustInstance>;
 
     Box::leak(Box::new(ferris))
@@ -33,6 +33,14 @@ unsafe extern "C" fn kill_ferris(ptr: *mut Box<dyn RustInstance>) {
 impl MonoBehaviour for RotFerris {
     fn start(&mut self) {
         info!("仙狐さんもふりたいじゃん！！！！");
+
+        if self.ferris.is_null() {
+            info!("Ferris is null!");
+        }
+
+        if self.fps_field.is_null() {
+            info!("fps field is null!");
+        }
 
         use std::convert::TryFrom;
         let pi_instance = f32::try_from(Instance::from(std::f32::consts::PI));
@@ -48,11 +56,16 @@ impl MonoBehaviour for RotFerris {
     }
 
     fn update(&mut self) {
-        self.rotation += Time::delta_time() * 180.0;
+        let dt = Time::delta_time();
+
+        self.rotation += dt * 180.0;
         self.rotation %= 360.0;
 
         self.ctx
             .invoke("SetFerrisRotation", &[self.rotation.into()]);
+        
+        self.fps_field
+            .set_property("text", &(&*format!("{} FPS", 1.0 / dt)).into());
     }
 }
 

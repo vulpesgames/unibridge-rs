@@ -157,7 +157,10 @@ namespace UniBridge {
         delegate UInt64 UniBridgeSizedBytes(Slice<byte> ptr);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        delegate UInt64 UniBridgeGetProperty(UInt64 id, Slice<char> className, Slice<char> propertyName);
+        delegate UInt64 UniBridgeGet(UInt64 id, Slice<char> className, Slice<char> name);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate bool UniBridgeSet(UInt64 id, Slice<char> className, Slice<char> name, UInt64 value);
 
         /* フィールド */
 
@@ -171,7 +174,11 @@ namespace UniBridge {
         private InstancePool.InvokeMethodDelegate    _invokeMethod;
         private InstancePool.InvokeAsDelegate        _invokeAs;
         private UniBridgeClone                       _clone;
-        private UniBridgeGetProperty                 _getProperty;
+        private UniBridgeGet                         _getProperty;
+        private UniBridgeGet                         _getField;
+
+        private UniBridgeSet                         _setProperty;
+        private UniBridgeSet                         _setField;
 
         private UniBridgeSizedBytes _sizedBytes;
 
@@ -238,13 +245,44 @@ namespace UniBridge {
                 _invokeAs        = InstancePool.InvokeAs,
                 _clone           = InstancePool.CloneInstance,
                 _getProperty     = (UInt64 id, Slice<char> className, Slice<char> propertyName) => {
-                    var ty = Type.GetType(className.ToString());
+                    var v = InstancePool.GetInstance(id);
+                    var ty = v?.GetType() ?? Type.GetType(className.ToString());
                     var prop = propertyName.ToString();
-                    var res = ty?.GetProperty(prop);
+                    var res = ty.GetProperty(prop);
 
                     return InstancePool.AppendInstance(
-                        res.GetValue(InstancePool.GetInstance(id))
+                        res?.GetValue(v)
                     );
+                },
+                _getField        = (UInt64 id, Slice<char> className, Slice<char> fieldName) => {
+                    var v = InstancePool.GetInstance(id);
+                    var ty = v?.GetType() ?? Type.GetType(className.ToString());
+                    var prop = fieldName.ToString();
+                    var res = ty.GetField(prop);
+
+                    return InstancePool.AppendInstance(
+                        res?.GetValue(v)
+                    );
+                },
+                _setProperty     = (UInt64 id, Slice<char> className, Slice<char> propertyName, UInt64 value) => {
+                    var v = InstancePool.GetInstance(id);
+                    var ty = v?.GetType() ?? Type.GetType(className.ToString());
+                    var prop = propertyName.ToString();
+                    var res = ty.GetProperty(prop);
+
+                    res?.SetValue(v, InstancePool.GetInstance(value));
+
+                    return true;
+                },
+                _setField        = (UInt64 id, Slice<char> className, Slice<char> fieldName, UInt64 value) => {
+                    var v = InstancePool.GetInstance(id);
+                    var ty = v?.GetType() ?? Type.GetType(className.ToString());
+                    var prop = fieldName.ToString();
+                    var res = ty.GetField(prop);
+
+                    res?.SetValue(v, InstancePool.GetInstance(value));
+
+                    return true;
                 },
                 // 特殊キャスト
                 _sizedBytes = b => InstancePool.AppendInstance(b.ToArray()),
