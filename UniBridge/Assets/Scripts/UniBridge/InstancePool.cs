@@ -21,16 +21,16 @@ namespace UniBridge {
         public delegate UInt64 InvokeAsDelegate(UInt64        id, Slice<char> className, Slice<char> methodName,
                                                 Slice<UInt64> args);
 
-        private static          Dictionary<UInt64, object> _instances       = new Dictionary<UInt64, object>();
-        private static          UInt64                     _instanceCounter = 1;
-        private static readonly Stack<UInt64>              _unusedInstance  = new Stack<UInt64>();
+        private static Dictionary<UInt64, (UInt64, object)> _instances       = new Dictionary<UInt64, (UInt64, object)>();
+        private static UInt64                               _instanceCounter = 1;
+        private static Stack<UInt64>                        _unusedInstance  = new Stack<UInt64>();
 
         public static object GetInstance(UInt64 id) {
             if (id == 0) {
                 return null;
             }
 
-            return _instances.TryGetValue(id, out var o) ? o : null;
+            return _instances.TryGetValue(id, out var o) ? o.Item2 : null;
         }
 
         // Unity C#側から呼び出すメソッド
@@ -41,7 +41,18 @@ namespace UniBridge {
             }
 
             var id = _unusedInstance.Count == 0 ? _instanceCounter++ : _unusedInstance.Pop();
-            _instances[id] = instance;
+            _instances[id] = (1, instance);
+
+            return id;
+        }
+
+        public static UInt64 CloneInstance(UInt64 id) {
+            if (id == 0 || !_instances.ContainsKey(id)) {
+                return 0;
+            }
+            
+            var (cnt, o) = _instances[id];
+            _instances[id] = (cnt + 1, o);
 
             return id;
         }
@@ -69,13 +80,23 @@ namespace UniBridge {
 
         [MonoPInvokeCallback(typeof(DisposeInstanceDelegate))]
         public static void DisposeInstance(UInt64 id) {
-            if (id == 0)
+            if (id == 0 || !_instances.ContainsKey(id)) {
                 return;
+            }
             
-            _unusedInstance.Push(id);
-            object o = _instances.Remove(id);
+            var (cnt, obj)   = _instances[id];
+            cnt--;
+
+            if (cnt == 0) {
+                _unusedInstance.Push(id);
+                object o = _instances.Remove(id);
+            } else {
+                _instances[id] = (cnt, obj);
+            }
         }
 
+        /* */
+        
         [MonoPInvokeCallback(typeof(InvokeMethodDelegate))]
         public static UInt64 InvokeMethod(UInt64 id, Slice<char> methodName, Slice<UInt64> args) {
             var instance = GetInstance(id);
@@ -99,7 +120,7 @@ namespace UniBridge {
             if (ty == null) {
                 Debug.LogWarning("type is null");
             }
-            
+
             var args1 = args.ToArray()
                             .Select(GetInstance)
                             .ToArray();

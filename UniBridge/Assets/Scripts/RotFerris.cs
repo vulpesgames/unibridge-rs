@@ -9,11 +9,11 @@ public class RotFerris : MonoBehaviour {
     [SerializeField] GameObject ferris = null;
 
     private unsafe void* _rustInstance;
-    
+
     private void Awake() {
         // ランタイムの初期化を行う
         BridgeRuntime.InitializeRuntime();
-        
+
         // Rust側のインスタンス（RotFerris）を取得する
         unsafe {
             _rustInstance = Internal.new_ferris();
@@ -31,15 +31,15 @@ public class RotFerris : MonoBehaviour {
         var methodName1 = System.Text.Encoding.UTF8.GetBytes(methodName);
         var args1 = args.Select(InstancePool.AppendInstance)
                        .ToArray();
-        
+
         unsafe {
             fixed (UInt64* a = args1)
             fixed (byte* b = methodName1) {
                 var res = Internal.unibridge_invoke(_rustInstance,
-                                                     InstancePool.AppendInstance(this), 
+                                                     InstancePool.AppendInstance(this),
                                                      new Slice<char>((char*) b, (UIntPtr) methodName1.Length),
                                                      new Slice<UInt64>(a, (UIntPtr) args1.Length));
-                
+
                 var res1 = InstancePool.GetInstance(res);
                 InstancePool.DisposeInstance(res);
 

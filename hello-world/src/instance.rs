@@ -1,12 +1,25 @@
 use crate::glue::get_glue;
+use std::convert::{TryFrom, TryInto};
 
 #[repr(C)]
 pub struct Instance(u64);
 
 #[repr(C)]
+#[derive(Clone, Copy)]
+pub struct WeakInstance(u64);
+
+#[repr(C)]
 pub struct TypeCast<T>(pub(crate) bool, pub(crate) T);
 
 impl Instance {
+    pub fn from_raw_unchecked(id: u64) -> Instance {
+        Instance(id)
+    }
+
+    pub fn from_raw(id: u64) -> Option<Instance> {
+        WeakInstance(id).upgrade()
+    }
+
     pub fn null() -> Instance {
         Instance(0)
     }
@@ -26,6 +39,22 @@ impl Instance {
     pub fn leak(instance: Self) -> u64 {
         let mut self_ = instance;
         std::mem::replace(&mut self_.0, 0)
+    }
+
+    pub fn downgrade(&self) -> WeakInstance {
+        WeakInstance(self.0)
+    }
+}
+
+impl WeakInstance {
+    pub fn upgrade(self) -> Option<Instance> {
+        let v = (get_glue().clone_instance)(self.0);
+
+        if v.is_null() {
+            None
+        } else {
+            Some(v)
+        }
     }
 }
 
@@ -51,6 +80,12 @@ impl Drop for Instance {
     }
 }
 
+impl PartialEq for Instance {
+    fn eq(&self, other: &Self) -> bool {
+        self.invoke("op_Equality", &[other.clone()]).try_into().expect("equality comparison should be bool")
+    }
+}
+
 impl From<&str> for Instance {
     fn from(s: &str) -> Instance {
         (get_glue().to_string)(s)
@@ -63,9 +98,7 @@ impl From<f32> for Instance {
     }
 }
 
-use std::convert::TryFrom;
-
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct CastError;
 
 impl TryFrom<Instance> for f32 {

@@ -50,16 +50,16 @@ namespace UniBridge {
 #if UNITY_EDITOR
         public static void unibridge_init_runtime(UniBridgeGlue glue) {
             var f = Marshal.GetDelegateForFunctionPointer<BridgeInitRuntime>(
-                InternalDll
-                   .FindSymbol("unibridge_init_runtime"));
+                                                                             InternalDll
+                                                                                .FindSymbol("unibridge_init_runtime"));
 
             f(glue);
         }
 
         public static void unibridge_drop_runtime() {
             var f = Marshal.GetDelegateForFunctionPointer<BridgeDropRuntime>(
-                InternalDll
-                   .FindSymbol("unibridge_drop_runtime"));
+                                                                             InternalDll
+                                                                                .FindSymbol("unibridge_drop_runtime"));
 
             f();
         }
@@ -67,24 +67,24 @@ namespace UniBridge {
         //
         public static unsafe UInt64 unibridge_invoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args) {
             var f = Marshal.GetDelegateForFunctionPointer<RustInvoke>(
-                InternalDll
-                   .FindSymbol("unibridge_invoke"));
+                                                                      InternalDll
+                                                                         .FindSymbol("unibridge_invoke"));
 
             return f(rust, context, name, args);
         }
 
         public static unsafe void* new_ferris() {
             var f = Marshal.GetDelegateForFunctionPointer<NewFerris>(
-                InternalDll
-                   .FindSymbol("new_ferris"));
+                                                                     InternalDll
+                                                                        .FindSymbol("new_ferris"));
 
             return f();
         }
 
         public static unsafe void kill_ferris(void* ferris) {
             var f = Marshal.GetDelegateForFunctionPointer<KillFerris>(
-                InternalDll
-                   .FindSymbol("kill_ferris"));
+                                                                      InternalDll
+                                                                         .FindSymbol("kill_ferris"));
 
             f(ferris);
         }
@@ -227,8 +227,7 @@ namespace UniBridge {
                 _disposeInstance = InstancePool.DisposeInstance,
                 _invokeMethod    = InstancePool.InvokeMethod,
                 _invokeAs        = InstancePool.InvokeAs,
-                // インスタンスの複製
-                _clone = x => InstancePool.AppendInstance(InstancePool.GetInstance(x)),
+                _clone           = InstancePool.CloneInstance,
                 // プリミティブ型 <-> オブジェクト型変換
                 _toString = s => InstancePool.AppendInstance(s.ToString()),
                 _toF32    = x => InstancePool.AppendInstance(x),
