@@ -17,6 +17,9 @@ pub struct UniBridgeGlue {
         extern "C" fn(id: u64, class_name: &str, method: &str, args: &[Instance]) -> Instance,
     pub(crate) clone_instance: extern "C" fn(id: u64) -> Instance,
 
+    pub(crate) get_property:
+        extern "C" fn(id: u64, class_name: &str, property_name: &str) -> Instance,
+
     // 特殊キャスト
     pub(crate) sized_bytes: extern "C" fn(ptr: &[u8]) -> Instance,
 
@@ -32,8 +35,12 @@ impl UniBridgeGlue {
         (get_glue().new_instance)(class_name, args)
     }
 
-    pub fn invoke_as(id: Instance, class_name: &str, method: &str, args: &[Instance]) -> Instance {
-        (get_glue().invoke_as)(*id, class_name, method, args)
+    pub fn invoke_as(id: &Instance, class_name: &str, method: &str, args: &[Instance]) -> Instance {
+        (get_glue().invoke_as)(**id, class_name, method, args)
+    }
+
+    pub fn get_property(id: &Instance, class_name: &str, property_name: &str) -> Instance {
+        (get_glue().get_property)(**id, class_name, property_name)
     }
 }
 

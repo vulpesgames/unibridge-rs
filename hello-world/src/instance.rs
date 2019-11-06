@@ -82,7 +82,9 @@ impl Drop for Instance {
 
 impl PartialEq for Instance {
     fn eq(&self, other: &Self) -> bool {
-        self.invoke("op_Equality", &[other.clone()]).try_into().expect("equality comparison should be bool")
+        self.invoke("op_Equality", &[other.clone()])
+            .try_into()
+            .expect("equality comparison should be bool")
     }
 }
 

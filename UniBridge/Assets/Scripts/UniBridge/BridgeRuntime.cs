@@ -18,10 +18,10 @@ namespace UniBridge {
         delegate void BridgeDropRuntime();
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        unsafe delegate UInt64 RustInvoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args);
+        unsafe delegate UInt64 RustInvoke(void* rust, Slice<char> name, Slice<UInt64> args);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        unsafe delegate void* NewFerris();
+        unsafe delegate void* NewFerris(UInt64 ctx);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         unsafe delegate void KillFerris(void* ptr);
@@ -65,20 +65,20 @@ namespace UniBridge {
         }
 
         //
-        public static unsafe UInt64 unibridge_invoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args) {
+        public static unsafe UInt64 unibridge_invoke(void* rust, Slice<char> name, Slice<UInt64> args) {
             var f = Marshal.GetDelegateForFunctionPointer<RustInvoke>(
                                                                       InternalDll
                                                                          .FindSymbol("unibridge_invoke"));
 
-            return f(rust, context, name, args);
+            return f(rust, name, args);
         }
 
-        public static unsafe void* new_ferris() {
+        public static unsafe void* new_ferris(UInt64 ctx) {
             var f = Marshal.GetDelegateForFunctionPointer<NewFerris>(
                                                                      InternalDll
                                                                         .FindSymbol("new_ferris"));
 
-            return f();
+            return f(ctx);
         }
 
         public static unsafe void kill_ferris(void* ferris) {
@@ -97,7 +97,7 @@ namespace UniBridge {
         public static extern void unibridge_drop_runtime();
 
         [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
-        public static extern unsafe void unibridge_invoke(void* rust, UInt64 context, Slice<char> name, Slice<UInt64> args);
+        public static extern unsafe void unibridge_invoke(void* rust, Slice<char> name, Slice<UInt64> args);
 
         [DllImport(LIB_PATH, CallingConvention = CallingConvention.Cdecl)]
         public static extern unsafe void* new_ferris();
@@ -153,9 +153,11 @@ namespace UniBridge {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeClone(UInt64 id);
 
-
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeSizedBytes(Slice<byte> ptr);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate UInt64 UniBridgeGetProperty(UInt64 id, Slice<char> className, Slice<char> propertyName);
 
         /* フィールド */
 
@@ -169,6 +171,7 @@ namespace UniBridge {
         private InstancePool.InvokeMethodDelegate    _invokeMethod;
         private InstancePool.InvokeAsDelegate        _invokeAs;
         private UniBridgeClone                       _clone;
+        private UniBridgeGetProperty                 _getProperty;
 
         private UniBridgeSizedBytes _sizedBytes;
 
@@ -234,6 +237,15 @@ namespace UniBridge {
                 _invokeMethod    = InstancePool.InvokeMethod,
                 _invokeAs        = InstancePool.InvokeAs,
                 _clone           = InstancePool.CloneInstance,
+                _getProperty     = (UInt64 id, Slice<char> className, Slice<char> propertyName) => {
+                    var ty = Type.GetType(className.ToString());
+                    var prop = propertyName.ToString();
+                    var res = ty?.GetProperty(prop);
+
+                    return InstancePool.AppendInstance(
+                        res.GetValue(InstancePool.GetInstance(id))
+                    );
+                },
                 // 特殊キャスト
                 _sizedBytes = b => InstancePool.AppendInstance(b.ToArray()),
                 // プリミティブ型 <-> オブジェクト型変換

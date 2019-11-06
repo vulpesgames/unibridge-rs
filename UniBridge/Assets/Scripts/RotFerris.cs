@@ -16,7 +16,7 @@ public class RotFerris : MonoBehaviour {
 
         // Rust側のインスタンス（RotFerris）を取得する
         unsafe {
-            _rustInstance = Internal.new_ferris();
+            _rustInstance = Internal.new_ferris(InstancePool.AppendInstance(this));
         }
     }
 
@@ -36,7 +36,6 @@ public class RotFerris : MonoBehaviour {
             fixed (UInt64* a = args1)
             fixed (byte* b = methodName1) {
                 var res = Internal.unibridge_invoke(_rustInstance,
-                                                     InstancePool.AppendInstance(this),
                                                      new Slice<char>((char*) b, (UIntPtr) methodName1.Length),
                                                      new Slice<UInt64>(a, (UIntPtr) args1.Length));
 

@@ -27,20 +27,17 @@ extern "C" fn unibridge_drop_runtime() {
     glue::drop_glue();
 }
 
-use unity::{Context, RustInstance};
+use unity::RustInstance;
 
 #[no_mangle]
 unsafe extern "C" fn unibridge_invoke(
     i: *mut Box<dyn RustInstance>,
-    ctx: Context,
     method_name: &str,
     args: &[Instance],
 ) -> Instance {
-    use std::panic::{AssertUnwindSafe, catch_unwind};
+    use std::panic::{catch_unwind, AssertUnwindSafe};
 
-    match catch_unwind(AssertUnwindSafe (|| {
-        (*i).invoke(ctx, method_name, args)
-    })) {
+    match catch_unwind(AssertUnwindSafe(|| (*i).invoke(method_name, args))) {
         Ok(r) => r,
         Err(_) => {
             // Unity側のパニックハンドラを呼び出す
@@ -64,10 +61,7 @@ fn init_panic_handler() {
             },
         };
 
-        let UniBridgeGlue {
-            ref error_log,
-            ..
-        } = glue::get_glue();
+        let UniBridgeGlue { ref error_log, .. } = glue::get_glue();
 
         error_log(&format!("plugin panicked at '{}', {}", msg, location));
     }));

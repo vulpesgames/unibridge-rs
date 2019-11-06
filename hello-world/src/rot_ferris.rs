@@ -5,14 +5,17 @@ use log::info;
 pub type GameObject = Context;
 
 pub struct RotFerris {
+    // #[unity(self)]
+    ctx: Context,
     rotation: f32,
     // #[unity(serialize_field)]
     _ferris: GameObject,
 }
 
 #[no_mangle]
-unsafe extern "C" fn new_ferris() -> *mut Box<dyn RustInstance> {
+unsafe extern "C" fn new_ferris(ctx: Context) -> *mut Box<dyn RustInstance> {
     let ferris = Box::new(RotFerris {
+        ctx,
         rotation: 0.0,
         _ferris: Instance::null(),
     }) as Box<dyn RustInstance>;
@@ -26,7 +29,7 @@ unsafe extern "C" fn kill_ferris(ptr: *mut Box<dyn RustInstance>) {
 }
 
 impl MonoBehaviour for RotFerris {
-    fn start(&mut self, _ctx: Context) {
+    fn start(&mut self) {
         info!("仙狐さんもふりたいじゃん！！！！");
 
         use std::convert::TryFrom;
@@ -39,23 +42,25 @@ impl MonoBehaviour for RotFerris {
         }
     }
 
-    fn update(&mut self, ctx: Context) {
-        self.rotation += 1.0;
+    fn update(&mut self) {
+        self.rotation += Time::delta_time() * 180.0;
         self.rotation %= 360.0;
 
-        ctx.invoke("SetFerrisRotation", &[self.rotation.into()]);
+        info!("delta_time: {}", Time::delta_time());
+
+        self.ctx.invoke("SetFerrisRotation", &[self.rotation.into()]);
     }
 }
 
 impl RustInstance for RotFerris {
-    fn invoke(&mut self, ctx: Context, method_name: &str, _args: &[Instance]) -> Instance {
+    fn invoke(&mut self, method_name: &str, _args: &[Instance]) -> Instance {
         match method_name {
             "Start" => {
-                self.start(ctx);
+                self.start();
                 Instance::null()
             }
             "Update" => {
-                self.update(ctx);
+                self.update();
                 Instance::null()
             }
             _ => Instance::null(),
