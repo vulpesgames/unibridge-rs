@@ -1,5 +1,5 @@
-use crate::unity::*;
 use crate::math::*;
+use crate::unity::*;
 
 use crate::Instance;
 use log::info;
@@ -43,14 +43,16 @@ impl MonoBehaviour for RotFerris {
             info!("Cast failed");
         }
 
-        self.ctx.invoke("TestVector", &[Vector3::new(1.0, 2.0, 3.0).into()]);
+        self.ctx
+            .invoke("TestVector", &[Vector3::new(1.0, 2.0, 3.0).into()]);
     }
 
     fn update(&mut self) {
         self.rotation += Time::delta_time() * 180.0;
         self.rotation %= 360.0;
 
-        self.ctx.invoke("SetFerrisRotation", &[self.rotation.into()]);
+        self.ctx
+            .invoke("SetFerrisRotation", &[self.rotation.into()]);
     }
 }
 
