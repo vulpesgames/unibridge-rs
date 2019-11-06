@@ -66,8 +66,7 @@ namespace UniBridge {
         // Rust側から呼び出すメソッド
         [MonoPInvokeCallback(typeof(NewInstanceDelegate))]
         public static UInt64 NewInstance(Slice<char> className, Slice<UInt64> args) {
-            var args1 = args.ToArray()
-                            .Select(GetInstance)
+            var args1 = args.Select(GetInstance)
                             .ToArray();
 
             var ty = Type.GetType(className.ToString());
@@ -101,8 +100,7 @@ namespace UniBridge {
         public static UInt64 InvokeMethod(UInt64 id, Slice<char> methodName, Slice<UInt64> args) {
             var instance = GetInstance(id);
             var ty       = instance?.GetType();
-            var args1 = args.ToArray()
-                            .Select(GetInstance)
+            var args1 = args.Select(GetInstance)
                             .ToArray();
 
 
@@ -121,8 +119,7 @@ namespace UniBridge {
                 Debug.LogWarning("type is null");
             }
 
-            var args1 = args.ToArray()
-                            .Select(GetInstance)
+            var args1 = args.Select(GetInstance)
                             .ToArray();
 
             if (id == 0) {

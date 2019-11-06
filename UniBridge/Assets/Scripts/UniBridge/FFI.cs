@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
 using AOT;
+using System.Collections;
 
 namespace UniBridge {
     // メモリアロケーター
@@ -27,7 +28,7 @@ namespace UniBridge {
 
     // Rustのスライス
     [StructLayout(LayoutKind.Sequential)]
-    public struct Slice<T> where T : unmanaged {
+    public struct Slice<T> : IEnumerable<T> where T : unmanaged {
         private readonly unsafe T*      head;
         private readonly        UIntPtr len;
 
@@ -94,7 +95,12 @@ namespace UniBridge {
             return Encoding.UTF8.GetString(ToBytes());
         }
 
-        public IEnumerator<T> GetEnumerator() {
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+            for (var i = 0; i < Length; i++)
+                yield return this[i];
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
             for (var i = 0; i < Length; i++)
                 yield return this[i];
         }

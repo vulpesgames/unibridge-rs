@@ -153,6 +153,10 @@ namespace UniBridge {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate UInt64 UniBridgeClone(UInt64 id);
 
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate UInt64 UniBridgeSizedBytes(Slice<byte> ptr);
+
         /* フィールド */
 
         private UniBridgePanicHandler _handlePanic;
@@ -165,6 +169,8 @@ namespace UniBridge {
         private InstancePool.InvokeMethodDelegate    _invokeMethod;
         private InstancePool.InvokeAsDelegate        _invokeAs;
         private UniBridgeClone                       _clone;
+
+        private UniBridgeSizedBytes _sizedBytes;
 
         private UniBridgeToString _toString;
         private UniBridgeToF32    _toF32;
@@ -228,6 +234,8 @@ namespace UniBridge {
                 _invokeMethod    = InstancePool.InvokeMethod,
                 _invokeAs        = InstancePool.InvokeAs,
                 _clone           = InstancePool.CloneInstance,
+                // 特殊キャスト
+                _sizedBytes = b => InstancePool.AppendInstance(b.ToArray()),
                 // プリミティブ型 <-> オブジェクト型変換
                 _toString = s => InstancePool.AppendInstance(s.ToString()),
                 _toF32    = x => InstancePool.AppendInstance(x),

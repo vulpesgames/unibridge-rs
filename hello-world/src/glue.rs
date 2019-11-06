@@ -17,6 +17,9 @@ pub struct UniBridgeGlue {
         extern "C" fn(id: u64, class_name: &str, method: &str, args: &[Instance]) -> Instance,
     pub(crate) clone_instance: extern "C" fn(id: u64) -> Instance,
 
+    // 特殊キャスト
+    pub(crate) sized_bytes: extern "C" fn(ptr: &[u8]) -> Instance,
+
     // プリミティブ型 <-> オブジェクト型への変換
     pub(crate) to_string: extern "C" fn(string: &str) -> Instance,
     pub(crate) to_f32: extern "C" fn(x: f32) -> Instance,
