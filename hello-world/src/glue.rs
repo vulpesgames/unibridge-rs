@@ -52,6 +52,12 @@ pub(crate) fn set_glue(glue: UniBridgeGlue) {
     }
 }
 
+pub(crate) fn glue_loaded() -> bool {
+    unsafe {
+        CORE_GLUE.is_some()
+    }
+}
+
 pub(crate) fn get_glue() -> &'static UniBridgeGlue {
     unsafe { CORE_GLUE.as_ref().expect("UniBridgeGlue not loaded") }
 }

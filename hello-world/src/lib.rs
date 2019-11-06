@@ -40,8 +40,10 @@ unsafe extern "C" fn unibridge_invoke(
     match catch_unwind(AssertUnwindSafe(|| (*i).invoke(method_name, args))) {
         Ok(r) => r,
         Err(_) => {
-            // Unity側のパニックハンドラを呼び出す
-            (glue::get_glue().handle_panic)();
+            if glue::glue_loaded() {
+                // Unity側のパニックハンドラを呼び出す
+                (glue::get_glue().handle_panic)();
+            }
             Instance::null()
         }
     }

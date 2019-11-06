@@ -46,8 +46,6 @@ impl MonoBehaviour for RotFerris {
         self.rotation += Time::delta_time() * 180.0;
         self.rotation %= 360.0;
 
-        info!("delta_time: {}", Time::delta_time());
-
         self.ctx.invoke("SetFerrisRotation", &[self.rotation.into()]);
     }
 }

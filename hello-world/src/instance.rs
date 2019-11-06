@@ -72,7 +72,7 @@ impl Default for Instance {
 
 impl Drop for Instance {
     fn drop(&mut self) {
-        if self.is_null() {
+        if self.is_null() || !crate::glue::glue_loaded() {
             return;
         }
 
