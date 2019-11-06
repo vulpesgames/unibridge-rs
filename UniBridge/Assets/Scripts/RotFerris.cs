@@ -56,10 +56,6 @@ public class RotFerris : MonoBehaviour {
     private void Update() {
         _InvokeRustFunction("Update");
     }
-
-    public void SetFerrisRotation(float rot) {
-        ferris.transform.rotation = Quaternion.Euler(0, 0, rot);
-    }
     
     public void TestVector(Vector3 v) {
         Debug.Log(v);

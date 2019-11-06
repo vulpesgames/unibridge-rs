@@ -11,6 +11,16 @@ pub type Matrix2 = cgmath::Matrix2<f32>;
 pub type Matrix3 = cgmath::Matrix3<f32>;
 pub type Matrix4 = cgmath::Matrix4<f32>;
 
+pub trait EulerQuaternion {
+    fn euler(x: f32, y: f32, z: f32) -> Self;
+}
+
+impl EulerQuaternion for Quaternion {
+    fn euler(x: f32, y: f32, z: f32) -> Self {
+        cgmath::Euler::new(cgmath::Deg(x), cgmath::Deg(y), cgmath::Deg(z)).into()
+    }
+}
+
 impl From<Vector2> for Instance {
     fn from(v: Vector2) -> Instance {
         UniBridgeGlue::new_instance(

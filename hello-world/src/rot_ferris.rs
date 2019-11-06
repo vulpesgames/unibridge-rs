@@ -62,7 +62,8 @@ impl MonoBehaviour for RotFerris {
         self.rotation %= 360.0;
 
         self.ctx
-            .invoke("SetFerrisRotation", &[self.rotation.into()]);
+            .get_property("transform")
+            .set_property("rotation", &Quaternion::euler(0.0, 0.0, self.rotation).into());
         
         self.fps_field
             .set_property("text", &(&*format!("{} FPS", 1.0 / dt)).into());
